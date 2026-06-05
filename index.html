@@ -136,6 +136,49 @@
     .install-bar-text { font-size: 13px; color: #27500A; flex: 1; line-height: 1.4; }
     .install-bar-btn { font-size: 13px; font-weight: 700; color: #27500A; background: none; border: 1.5px solid #639922; border-radius: 99px; padding: 4px 14px; cursor: pointer; white-space: nowrap; font-family: inherit; }
     .install-bar-close { font-size: 20px; color: #3B6D11; cursor: pointer; background: none; border: none; padding: 0 2px; line-height: 1; }
+
+    /* 태블릿 공통 */
+    @media (min-width: 700px) {
+      .wrap { max-width: 860px; padding: 1.5rem 2.5rem 3rem; }
+      .main-title { font-size: 38px; }
+      .main-emoji { font-size: 72px; }
+      .level-grid { max-width: 640px; margin-left: auto; margin-right: auto; gap: 16px; }
+      .level-card { padding: 1.75rem 1rem; }
+      .lv-icon { font-size: 48px; }
+      .lv-name { font-size: 20px; }
+      .lv-desc { font-size: 13px; }
+      .owl-box { max-width: 640px; margin: 0 auto; }
+      .owl-text { font-size: 15px; }
+      .proverb-main { font-size: 24px; }
+      .opt { font-size: 15px; padding: 1rem; }
+      .explain-text { font-size: 15px; }
+      .explain-ex { font-size: 14px; }
+    }
+    /* 태블릿 가로모드 - 좌우 2단 */
+    @media (min-width: 700px) and (orientation: landscape) {
+      .wrap { padding: 1rem 2.5rem 1.5rem; }
+      #mainScreen .main-header { padding: 0.5rem 0 1rem; }
+      #mainScreen .main-emoji { font-size: 52px; margin-bottom: 6px; }
+      #mainScreen .main-title { font-size: 34px; }
+      #quizScreen { display: grid; grid-template-columns: 1fr 1fr; column-gap: 28px; align-items: start; }
+      #quizScreen .topbar,
+      #quizScreen .progress-bar,
+      #quizScreen .qnum-line { grid-column: 1 / -1; }
+      #quizScreen #quizArea { grid-column: 1; }
+      #quizScreen #feedbackLine { grid-column: 1; }
+      #quizScreen #nextWrap { grid-column: 1; }
+      #quizScreen #explainBox { grid-column: 2; grid-row: 3 / 8; margin-bottom: 0; }
+      .proverb-card { padding: 1.1rem 1rem; margin-bottom: 0.9rem; }
+      .proverb-main { font-size: 19px; }
+      .opts { margin-bottom: 0.9rem; gap: 8px; }
+      .opt { padding: 0.75rem 0.8rem; font-size: 14px; }
+      .progress-bar { margin-bottom: 0.75rem; }
+      .qnum-line { margin-bottom: 8px; }
+      #resultScreen { max-width: 600px; margin: 0 auto; }
+      .result-header { padding: 0.75rem 0 1rem; }
+      .result-emoji { font-size: 52px; }
+      .result-score-num { font-size: 60px; }
+    }
   </style>
 </head>
 <body>
