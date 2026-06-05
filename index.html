@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>속담 퀴즈</title>
+  <meta name="description" content="초등학생을 위한 한국 속담 4지선다 퀴즈" />
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="속담퀴즈" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #ffffff; --bg2: #f5f5f0; --bg3: #eeede8;
+      --text: #1a1a1a; --text2: #666; --text3: #999;
+      --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+      --radius: 14px; --radius-sm: 9px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1c1c1e; --bg2: #2c2c2e; --bg3: #3a3a3c;
+        --text: #f0f0f0; --text2: #aaa; --text3: #666;
+        --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.22);
+      }
+    }
+    html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); }
+    body { display: flex; flex-direction: column; min-height: 100dvh; }
+    .wrap { max-width: 480px; margin: 0 auto; padding: 1.5rem 1rem 3rem; width: 100%; flex: 1; }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* 메인 화면 */
+    .main-header { text-align: center; padding: 1.25rem 0 2rem; }
+    .main-emoji { font-size: 60px; display: block; margin-bottom: 10px; }
+    .main-title { font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+    .main-sub { font-size: 15px; color: var(--text2); margin-top: 8px; }
+
+    .level-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1.5rem; }
+    .level-card { border-radius: var(--radius); border: 2px solid var(--border); padding: 1.25rem 0.5rem; text-align: center; cursor: pointer; background: var(--bg); transition: transform .1s; -webkit-tap-highlight-color: transparent; user-select: none; }
+    .level-card:active { transform: scale(0.93); }
+    .lv-icon { font-size: 36px; display: block; margin-bottom: 8px; }
+    .lv-name { font-size: 17px; font-weight: 800; margin-bottom: 4px; }
+    .lv-desc { font-size: 11px; color: var(--text2); line-height: 1.55; }
+    .lv-count { font-size: 11px; margin-top: 6px; font-weight: 600; opacity: .7; }
+    .lv-easy { border-color: #97C459; } .lv-easy .lv-name { color: #3B6D11; }
+    .lv-mid  { border-color: #85B7EB; } .lv-mid  .lv-name { color: #185FA5; }
+    .lv-hard { border-color: #ED93B1; } .lv-hard .lv-name { color: #993556; }
+    @media (prefers-color-scheme: dark) {
+      .lv-easy .lv-name { color: #97C459; }
+      .lv-mid  .lv-name { color: #85B7EB; }
+      .lv-hard .lv-name { color: #ED93B1; }
+    }
+
+    .owl-box { background: var(--bg2); border-radius: var(--radius); padding: 1rem 1.25rem; display: flex; align-items: center; gap: 12px; }
+    .owl-icon { font-size: 30px; flex-shrink: 0; }
+    .owl-text { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+    /* 퀴즈 화면 */
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    .back-btn { font-size: 13px; color: var(--text2); cursor: pointer; border: none; background: none; padding: 6px 10px; border-radius: var(--radius-sm); -webkit-tap-highlight-color: transparent; }
+    .back-btn:active { background: var(--bg2); }
+    .level-pill { font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 99px; }
+    .pill-easy { background: #EAF3DE; color: #27500A; }
+    .pill-mid  { background: #E6F1FB; color: #0C447C; }
+    .pill-hard { background: #FBEAF0; color: #72243E; }
+    @media (prefers-color-scheme: dark) {
+      .pill-easy { background: #1a2e0f; color: #C0DD97; }
+      .pill-mid  { background: #0d1e35; color: #B5D4F4; }
+      .pill-hard { background: #2e0f1a; color: #F4C0D1; }
+    }
+    .score-txt { font-size: 13px; color: var(--text2); }
+    .score-num { font-weight: 800; color: var(--text); }
+
+    .progress-bar { height: 6px; background: var(--bg3); border-radius: 99px; margin-bottom: 1.25rem; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 99px; background: #97C459; transition: width .4s ease; }
+    .pill-mid ~ .progress-fill, .pill-mid  { }
+
+    .qnum-line { text-align: center; font-size: 13px; color: var(--text3); margin-bottom: 12px; }
+
+    .proverb-card { border-radius: var(--radius); padding: 1.6rem 1.25rem; margin-bottom: 1.25rem; text-align: center; }
+    .proverb-card.easy { background: #EAF3DE; }
+    .proverb-card.mid  { background: #E6F1FB; }
+    .proverb-card.hard { background: #FBEAF0; }
+    @media (prefers-color-scheme: dark) {
+      .proverb-card.easy { background: #1a2e0f; }
+      .proverb-card.mid  { background: #0d1e35; }
+      .proverb-card.hard { background: #2e0f1a; }
+    }
+    .proverb-main { font-size: 21px; font-weight: 800; color: var(--text); margin-bottom: 8px; line-height: 1.45; }
+    .proverb-sub  { font-size: 13px; color: var(--text2); }
+
+    .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.25rem; }
+    .opt { border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 0.9rem 0.85rem; font-size: 14px; color: var(--text); cursor: pointer; background: var(--bg); text-align: left; line-height: 1.5; transition: transform .08s; -webkit-tap-highlight-color: transparent; font-family: inherit; }
+    .opt:active:not(:disabled) { transform: scale(0.95); }
+    .opt.correct { background: #EAF3DE; border-color: #639922; color: #27500A; font-weight: 700; }
+    .opt.wrong   { background: #FCEBEB; border-color: #E24B4A; color: #791F1F; }
+    .opt:disabled { cursor: default; }
+    @media (prefers-color-scheme: dark) {
+      .opt.correct { background: #1a2e0f; border-color: #639922; color: #C0DD97; }
+      .opt.wrong   { background: #2e0f0f; border-color: #E24B4A; color: #F09595; }
+    }
+
+    .explain-box { border-radius: var(--radius); border: 1.5px solid var(--border); padding: 1.1rem 1.25rem; margin-bottom: 1rem; background: var(--bg); display: none; }
+    .explain-box.show { display: block; }
+    .explain-lbl { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 8px; }
+    .explain-text { font-size: 14px; color: var(--text); line-height: 1.85; }
+    .explain-ex { font-size: 13px; color: var(--text2); margin-top: 8px; line-height: 1.7; padding-top: 8px; border-top: 1px solid var(--border); }
+    .stars { font-size: 20px; letter-spacing: 3px; margin-bottom: 8px; }
+
+    .feedback-line { text-align: center; font-size: 15px; font-weight: 700; min-height: 1.5rem; margin-bottom: 0.75rem; }
+    .fb-ok { color: #3B6D11; } .fb-no { color: #A32D2D; }
+    @media (prefers-color-scheme: dark) { .fb-ok { color: #97C459; } .fb-no { color: #F09595; } }
+
+    .next-btn { width: 100%; padding: 0.9rem; border-radius: var(--radius-sm); border: 1.5px solid var(--border2); background: var(--bg); font-size: 16px; font-weight: 700; color: var(--text); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .08s; font-family: inherit; }
+    .next-btn:active { transform: scale(0.97); background: var(--bg2); }
+
+    /* 결과 화면 */
+    .result-header { text-align: center; padding: 2rem 0 1.5rem; }
+    .result-emoji { font-size: 64px; display: block; margin-bottom: 12px; }
+    .result-title { font-size: 26px; font-weight: 800; }
+    .result-sub { font-size: 15px; color: var(--text2); margin-top: 6px; }
+    .result-score-box { background: var(--bg2); border-radius: var(--radius); padding: 1.5rem; text-align: center; margin-bottom: 1.5rem; }
+    .result-score-num { font-size: 56px; font-weight: 800; line-height: 1; }
+    .result-score-label { font-size: 14px; color: var(--text2); margin-top: 6px; }
+    .result-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .result-btn { padding: 0.9rem; border-radius: var(--radius-sm); border: 1.5px solid var(--border2); background: var(--bg); font-size: 15px; font-weight: 700; color: var(--text); cursor: pointer; -webkit-tap-highlight-color: transparent; font-family: inherit; }
+    .result-btn:active { background: var(--bg2); transform: scale(0.97); }
+
+    /* 설치 배너 */
+    .install-bar { display: none; align-items: center; background: #EAF3DE; border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-bottom: 1rem; gap: 10px; }
+    .install-bar.show { display: flex; }
+    .install-bar-text { font-size: 13px; color: #27500A; flex: 1; line-height: 1.4; }
+    .install-bar-btn { font-size: 13px; font-weight: 700; color: #27500A; background: none; border: 1.5px solid #639922; border-radius: 99px; padding: 4px 14px; cursor: pointer; white-space: nowrap; font-family: inherit; }
+    .install-bar-close { font-size: 20px; color: #3B6D11; cursor: pointer; background: none; border: none; padding: 0 2px; line-height: 1; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="installBar" class="install-bar">
+    <span class="install-bar-text">📲 홈 화면에 추가하면 앱처럼 써요!</span>
+    <button class="install-bar-btn" id="installBtn">설치</button>
+    <button class="install-bar-close" id="installClose">×</button>
+  </div>
+
+  <!-- 메인 -->
+  <div class="screen active" id="mainScreen">
+    <div class="main-header">
+      <span class="main-emoji">📖</span>
+      <div class="main-title">속담 퀴즈!</div>
+      <div class="main-sub">레벨을 골라봐요</div>
+    </div>
+    <div class="level-grid">
+      <div class="level-card lv-easy" onclick="playClick();startQuiz('easy')">
+        <span class="lv-icon">🌱</span>
+        <div class="lv-name">초급</div>
+        <div class="lv-desc">쉬운 속담으로<br>시작해요!</div>
+        <div class="lv-count" style="color:#3B6D11;">20문제</div>
+      </div>
+      <div class="level-card lv-mid" onclick="playClick();startQuiz('mid')">
+        <span class="lv-icon">⭐</span>
+        <div class="lv-name">중급</div>
+        <div class="lv-desc">조금 더<br>어려운 속담!</div>
+        <div class="lv-count" style="color:#185FA5;">20문제</div>
+      </div>
+      <div class="level-card lv-hard" onclick="playClick();startQuiz('hard')">
+        <span class="lv-icon">🔥</span>
+        <div class="lv-name">고급</div>
+        <div class="lv-desc">속담 왕에<br>도전해요!</div>
+        <div class="lv-count" style="color:#993556;">20문제</div>
+      </div>
+    </div>
+    <div class="owl-box">
+      <span class="owl-icon">🦉</span>
+      <div class="owl-text">속담을 알면 말이 더 재미있어져요!<br>레벨을 골라서 도전해봐요~ 파이팅!</div>
+    </div>
+  </div>
+
+  <!-- 퀴즈 -->
+  <div class="screen" id="quizScreen">
+    <div class="topbar">
+      <button class="back-btn" onclick="playBack();goMain()">← 처음으로</button>
+      <span class="level-pill" id="levelPill"></span>
+      <span class="score-txt">점수 <span class="score-num" id="scoreNum">0</span></span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="qnum-line" id="qNumLine">문제 1 / 10</div>
+    <div id="quizArea"></div>
+    <div class="explain-box" id="explainBox">
+      <div class="explain-lbl">💡 속담 풀이</div>
+      <div id="explainContent"></div>
+    </div>
+    <div class="feedback-line" id="feedbackLine"></div>
+    <div id="nextWrap" style="display:none;">
+      <button class="next-btn" id="nextBtn">다음 문제 →</button>
+    </div>
+  </div>
+
+  <!-- 결과 -->
+  <div class="screen" id="resultScreen">
+    <div class="result-header">
+      <span class="result-emoji" id="resultEmoji">🎉</span>
+      <div class="result-title" id="resultTitle">퀴즈 완료!</div>
+      <div class="result-sub" id="resultSub"></div>
+    </div>
+    <div class="result-score-box">
+      <div class="result-score-num" id="resultScore"></div>
+      <div class="result-score-label" id="resultLabel"></div>
+    </div>
+    <div class="result-btns">
+      <button class="result-btn" onclick="playClick();startQuiz(currentLevel)">같은 레벨 다시</button>
+      <button class="result-btn" onclick="playClick();goMain()">레벨 바꾸기</button>
+    </div>
+  </div>
+
+</div>
+<script>
+// ===================== 속담 데이터 =====================
+const PROVERBS = {
+  easy: [
+    { p:"가는 말이 고와야 오는 말이 곱다", a:"남에게 잘해야 나도 잘 대접받는다", w:["빨리 가면 좋은 일이 생긴다","말을 많이 해야 친해진다","걸음이 빠를수록 좋다"], ex:"친구에게 먼저 친절하게 말하면, 친구도 나에게 친절하게 말해줘요.", desc:"내가 남에게 좋게 대하면, 남도 나에게 좋게 대한다는 뜻이에요. 먼저 친절하게 행동하는 게 중요해요!" },
+    { p:"세 살 버릇 여든까지 간다", a:"어릴 때 버릇이 평생 간다", w:["세 살이 되면 어른이 된다","여든 살이 되면 지혜롭다","나이가 들면 버릇이 없어진다"], ex:"어릴 때부터 인사하는 습관을 들이면, 어른이 되어서도 인사를 잘 한답니다.", desc:"어릴 때 생긴 나쁜 버릇은 나이가 들어도 고치기 어려워요. 그래서 어릴 때부터 좋은 습관을 만드는 게 중요해요!" },
+    { p:"백지장도 맞들면 낫다", a:"힘을 합치면 쉬워진다", w:["종이는 혼자 들어야 한다","백 장을 모으면 무거워진다","종이가 많으면 공부를 잘 한다"], ex:"무거운 책상을 혼자 들기 힘들 때, 친구와 같이 들면 훨씬 쉬워지잖아요!", desc:"아무리 가벼운 종이라도 함께 들면 더 쉽다는 뜻이에요. 혼자 하는 것보다 함께 하면 뭐든 더 잘 돼요!" },
+    { p:"하늘이 무너져도 솟아날 구멍이 있다", a:"아무리 힘들어도 방법이 있다", w:["하늘이 무너지면 도망가야 한다","구멍이 크면 위험하다","하늘은 절대 무너지지 않는다"], ex:"시험을 망쳤다고 너무 슬퍼하지 마요. 다음에 더 열심히 하면 돼요!", desc:"아무리 어렵고 힘든 일이 생겨도 반드시 해결할 방법이 있다는 뜻이에요. 포기하지 말아요!" },
+    { p:"낮말은 새가 듣고 밤말은 쥐가 듣는다", a:"말은 항상 조심해야 한다", w:["새와 쥐는 말을 잘 한다","낮에는 크게 말하면 안 된다","밤에는 쥐가 무서워진다"], ex:"친구 뒤에서 나쁜 말을 하면 그 말이 친구 귀에 들어갈 수 있어요.", desc:"어디서 하는 말이든 다 들릴 수 있으니 항상 말을 조심해야 해요. 나쁜 말은 하지 말아요!" },
+    { p:"돌다리도 두드려보고 건너라", a:"무슨 일이든 신중하게 해라", w:["돌다리는 건너면 안 된다","두드리면 다리가 부서진다","돌을 던지고 건너가라"], ex:"숙제 제출 전에 틀린 곳이 없는지 한번 더 확인하는 것처럼요!", desc:"아무리 안전해 보이는 일도 미리 확인하고 조심하라는 뜻이에요. 실수를 줄이려면 꼼꼼히 확인해요!" },
+    { p:"콩 심은 데 콩 나고 팥 심은 데 팥 난다", a:"한 일에 따라 결과가 달라진다", w:["콩과 팥은 같이 자란다","씨앗은 아무데나 심어도 된다","콩이 팥보다 맛있다"], ex:"열심히 공부하면 좋은 점수를 받고, 놀기만 하면 성적이 떨어지는 것처럼요.", desc:"좋은 씨앗을 심어야 좋은 열매가 나는 것처럼, 좋은 행동을 해야 좋은 결과가 온다는 뜻이에요!" },
+    { p:"빈 수레가 요란하다", a:"아는 게 없을수록 떠든다", w:["수레는 항상 시끄럽다","빈 것이 더 가볍다","수레가 많으면 소리가 크다"], ex:"실제로 잘 모르면서 아는 척하며 큰소리치는 친구를 본 적 있죠?", desc:"내용이 없는 빈 수레가 더 시끄럽듯이, 아는 것이 적은 사람이 오히려 더 큰소리를 낸다는 뜻이에요!" },
+    { p:"원숭이도 나무에서 떨어진다", a:"누구나 실수할 수 있다", w:["원숭이는 나무를 잘 탄다","나무가 높으면 위험하다","원숭이는 나무에 살지 않는다"], ex:"수학을 제일 잘하는 친구도 가끔 계산 실수를 해요. 누구나 그럴 수 있어요!", desc:"아무리 잘하는 사람도 실수할 때가 있어요. 실수해도 괜찮아요, 다시 잘하면 돼요!" },
+    { p:"가재는 게 편이다", a:"비슷한 것끼리 서로 돕는다", w:["가재와 게는 싸운다","바다에 사는 것들은 다 같다","가재는 혼자 산다"], ex:"같은 반 친구들끼리 서로 도와주는 것처럼요.", desc:"가재와 게는 비슷하게 생겨서 서로 편을 들어준다는 뜻이에요. 비슷한 처지의 사람끼리 서로 돕는다는 말이에요!" },
+    { p:"시작이 반이다", a:"일을 시작하는 게 가장 중요하다", w:["반만 해도 끝난다","시작하면 실패한다","반쪽만 해도 된다"], ex:"숙제가 너무 많아 보여도 일단 시작하면 금방 끝날 때가 있죠?", desc:"무슨 일이든 시작하기가 제일 어려워요. 일단 시작하면 절반은 한 거나 마찬가지예요!" },
+    { p:"우물 안 개구리", a:"세상을 모르고 자기만 잘난 줄 안다", w:["개구리는 수영을 잘 한다","우물은 깊고 좁다","개구리는 우물을 좋아한다"], ex:"우리 동네만 알고 넓은 세상을 모르는 것처럼, 견문을 넓혀야 해요.", desc:"우물 안에서만 살면 넓은 세상을 모르듯이, 자기 주변만 보고 세상이 그것뿐이라고 착각하는 사람을 뜻해요!" },
+    { p:"고생 끝에 낙이 온다", a:"힘든 시간 후에 좋은 일이 온다", w:["고생하면 아프다","낙은 혼자 온다","고생하지 말고 쉬어라"], ex:"방학 때 열심히 공부하면 다음 학기에 좋은 성적을 받을 수 있어요!", desc:"힘들고 어려운 시간을 잘 버티면 나중에 반드시 좋은 일이 생겨요. 포기하지 말고 끝까지 해봐요!" },
+    { p:"티끌 모아 태산", a:"작은 것도 모으면 커진다", w:["티끌은 쓸모없다","태산은 아주 높다","먼지는 모으면 안 된다"], ex:"매일 동전 한 개씩 저금하면 나중에 큰돈이 돼요!", desc:"작은 먼지도 계속 모으면 큰 산이 된다는 뜻이에요. 작은 노력도 꾸준히 하면 큰 결과를 만들어요!" },
+    { p:"배보다 배꼽이 더 크다", a:"주된 것보다 곁들이가 더 크다", w:["배꼽은 배에 있다","배가 고프면 배꼽이 작아진다","배와 배꼽은 같은 크기다"], ex:"생일 케이크보다 포장이 더 화려하다면 배보다 배꼽이 큰 거예요.", desc:"중요한 것보다 덜 중요한 부분이 더 커질 때 쓰는 말이에요. 순서가 뒤바뀐 상황을 재미있게 표현해요!" },
+    { p:"금강산도 식후경", a:"배가 불러야 다른 것도 즐길 수 있다", w:["금강산은 아름답다","식사는 천천히 해야 한다","경치보다 밥이 맛있다"], ex:"아무리 재미있는 소풍이라도 배가 고프면 즐기기 어렵죠?", desc:"아무리 좋은 것도 배가 불러야 제대로 즐길 수 있다는 뜻이에요. 건강과 기본이 먼저예요!" },
+    { p:"아는 길도 물어 가라", a:"잘 안다고 방심하면 안 된다", w:["모르는 길은 혼자 가라","길을 물으면 늦는다","아는 것은 말하면 안 된다"], ex:"수학 문제를 잘 안다고 생각해도 선생님께 한번 더 확인해 보는 게 좋아요!", desc:"잘 안다고 해도 실수할 수 있으니 확인하라는 뜻이에요. 방심하지 말고 꼼꼼하게 확인해요!" },
+    { p:"눈에서 멀어지면 마음에서도 멀어진다", a:"자주 보지 못하면 정이 줄어든다", w:["눈이 나쁘면 마음도 나쁘다","멀리 있으면 건강에 좋다","눈과 마음은 관계없다"], ex:"전학 간 친구와 연락을 안 하다 보면 점점 서로 잊게 되는 것처럼요.", desc:"자주 만나거나 연락해야 정이 유지된다는 뜻이에요. 소중한 친구에게 자주 연락해요!" },
+    { p:"말 한마디에 천 냥 빚도 갚는다", a:"말을 잘 하면 큰 문제도 해결된다", w:["천 냥은 많은 돈이다","빚은 갚지 않아도 된다","말을 하면 돈이 생긴다"], ex:"선생님께 솔직하게 사정을 말씀드리면 혼나지 않을 수도 있어요!", desc:"말 한마디가 엄청나게 중요하다는 뜻이에요. 상황에 맞는 좋은 말 한마디가 큰 도움이 돼요!" },
+    { p:"호랑이도 제 말 하면 온다", a:"말하는 순간 그 사람이 나타난다", w:["호랑이는 말을 잘 한다","호랑이 이야기는 하면 안 된다","제 말을 하면 기분이 좋다"], ex:"친구 이야기를 하고 있는데 갑자기 그 친구가 나타날 때 쓰는 말이에요!", desc:"누군가 이야기를 하고 있을 때 그 사람이 갑자기 나타나는 상황을 재미있게 표현한 말이에요!" },
+  ],
+  mid: [
+    { p:"천 리 길도 한 걸음부터", a:"큰일도 작은 것부터 시작해야 한다", w:["천 리는 아주 먼 거리다","걸음이 빠르면 금방 간다","한 걸음으로 천 리를 간다"], ex:"긴 독서록도 첫 문장 한 줄을 쓰는 것부터 시작이에요.", desc:"아무리 멀고 어려운 목표도 첫 번째 작은 발걸음부터 시작해야 이룰 수 있다는 뜻이에요!" },
+    { p:"구르는 돌에는 이끼가 끼지 않는다", a:"꾸준히 노력하는 사람은 발전한다", w:["돌은 굴리면 안 된다","이끼는 돌에서 자란다","돌이 구르면 위험하다"], ex:"매일 꾸준히 운동하는 사람은 계속 실력이 늘어나요.", desc:"계속 움직이고 노력하는 사람은 낡지 않고 항상 새롭게 발전한다는 뜻이에요!" },
+    { p:"바늘 도둑이 소 도둑 된다", a:"작은 나쁜 습관이 큰 잘못으로 이어진다", w:["소는 바늘보다 크다","도둑은 잡히면 안 된다","바늘과 소는 관계없다"], ex:"처음엔 친구 지우개를 몰래 가져갔다가 나중엔 더 큰 물건을 가져가게 될 수 있어요.", desc:"처음엔 작은 나쁜 행동이라도 버릇이 되면 점점 더 큰 잘못을 하게 된다는 경고예요!" },
+    { p:"공든 탑이 무너지랴", a:"정성껏 한 일은 쉽게 무너지지 않는다", w:["탑은 쉽게 무너진다","공사가 끝나면 탑이 생긴다","탑을 쌓으면 무겁다"], ex:"오랫동안 열심히 쌓은 우정은 작은 오해 하나로 쉽게 무너지지 않아요.", desc:"오랫동안 정성을 다해 만든 것은 쉽게 무너지지 않는다는 뜻이에요. 꾸준한 노력은 반드시 빛을 발해요!" },
+    { p:"굴러온 돌이 박힌 돌 뺀다", a:"새로 온 사람이 원래 있던 사람을 밀어낸다", w:["돌은 굴러다닌다","박힌 돌이 더 단단하다","돌은 모두 같다"], ex:"새로 전학 온 친구가 오자마자 반장을 맡게 된 상황이 이런 경우예요.", desc:"새로 온 사람이 오히려 원래 있던 사람의 자리를 빼앗는 상황을 표현한 말이에요!" },
+    { p:"누워서 침 뱉기", a:"남에게 한 나쁜 일이 나에게 돌아온다", w:["누우면 침이 나온다","침대에서는 말하면 안 된다","누워서 쉬는 게 좋다"], ex:"친구를 괴롭히면 결국 내가 나쁜 아이로 소문나서 나에게 피해가 와요.", desc:"누워서 침을 뱉으면 자기 얼굴에 떨어지듯, 남을 해치려 하면 결국 자기가 피해를 입어요!" },
+    { p:"가랑비에 옷 젖는 줄 모른다", a:"작은 것도 계속되면 큰 영향을 미친다", w:["가랑비는 우산이 필요없다","비가 오면 옷이 빨리 젖는다","비 오는 날은 집에 있어야 한다"], ex:"매일 조금씩 군것질하다 보면 어느새 살이 많이 쪄 있을 수 있어요.", desc:"조금씩 내리는 비도 맞다 보면 옷이 흠뻑 젖듯이, 작은 것도 계속되면 큰 결과가 된다는 뜻이에요!" },
+    { p:"남의 떡이 커 보인다", a:"남의 것이 항상 더 좋아 보인다", w:["떡은 크게 만들어야 한다","남의 음식은 먹으면 안 된다","떡은 나눠 먹어야 한다"], ex:"내 도시락이 더 맛있는데도 친구 도시락이 더 맛있어 보이는 것처럼요.", desc:"실제로는 내 것이 더 좋아도 남의 것이 더 좋아 보이는 심리를 표현한 말이에요!" },
+    { p:"모로 가도 서울만 가면 된다", a:"방법보다 결과가 중요하다", w:["서울에 가면 좋은 일이 있다","모로 걸으면 빨리 간다","길은 항상 바르게 가야 한다"], ex:"어떤 방식으로 문제를 풀든 정답만 맞으면 된다는 생각이에요.", desc:"목적지에만 제대로 도착하면, 어떤 방법으로 가든 상관없다는 뜻이에요. 결과를 중시하는 말이에요!" },
+    { p:"호랑이 굴에 들어가야 호랑이를 잡는다", a:"위험을 감수해야 원하는 것을 얻는다", w:["호랑이 굴은 위험하다","호랑이는 굴에 살지 않는다","굴에는 여러 동물이 산다"], ex:"무대에 서기 무서워도 직접 올라가야 상을 받을 기회가 생겨요.", desc:"원하는 것을 얻으려면 위험하거나 어렵더라도 직접 뛰어들어야 한다는 뜻이에요. 용기가 필요해요!" },
+    { p:"작은 고추가 맵다", a:"작아도 능력이 뛰어날 수 있다", w:["고추는 크면 더 맵다","작은 것은 힘이 약하다","고추는 빨갛게 변한다"], ex:"키가 작은 친구가 달리기를 제일 잘할 수 있어요!", desc:"몸집이 작거나 나이가 어려도 능력이나 기운이 더 셀 수 있다는 뜻이에요. 겉모습으로 판단하면 안 돼요!" },
+    { p:"급할수록 돌아가라", a:"서두르면 오히려 실수한다", w:["급하면 빨리 달려라","돌아가면 더 오래 걸린다","급한 일은 서둘러야 한다"], ex:"시험 시간이 부족해도 천천히 꼼꼼히 읽어야 실수를 줄여요.", desc:"서두르면 오히려 실수가 생겨서 더 오래 걸릴 수 있어요. 급할 때일수록 침착하게 행동해요!" },
+    { p:"사공이 많으면 배가 산으로 간다", a:"의견이 너무 많으면 일이 잘못된다", w:["사공은 배를 잘 운전한다","배는 산에서도 탈 수 있다","사공이 많으면 안전하다"], ex:"모둠 발표 준비를 할 때 모두 제각각 다른 말을 하면 발표가 엉망이 돼요.", desc:"여러 사람이 제각각 자기 마음대로 이끌면 일이 엉뚱한 방향으로 흘러간다는 뜻이에요!" },
+    { p:"제 눈에 안경", a:"자기가 좋으면 다 좋아 보인다", w:["안경을 쓰면 잘 보인다","눈이 나쁘면 안경을 써야 한다","안경은 예쁘게 써야 한다"], ex:"자기가 좋아하는 가수의 노래는 뭐든 다 좋게 들리는 것처럼요.", desc:"좋아하는 사람이나 물건은 단점도 좋아 보인다는 뜻이에요. 사랑이나 관심이 눈을 가리는 거예요!" },
+    { p:"겉 다르고 속 다르다", a:"겉으로 보이는 것과 속마음이 다르다", w:["겉과 속은 항상 같다","속이 좋으면 겉도 좋다","겉모습이 전부다"], ex:"웃으면서 말하지만 속으로는 다른 생각을 하는 사람을 표현해요.", desc:"겉으로는 좋은 척하면서 속마음은 다른 사람을 표현할 때 써요. 솔직하게 행동하는 게 중요해요!" },
+    { p:"열 길 물 속은 알아도 한 길 사람 속은 모른다", a:"사람의 마음은 알기 어렵다", w:["물속에는 물고기가 산다","사람의 키는 한 길이다","물과 사람은 관계없다"], ex:"친한 친구라도 그 친구의 속마음을 완전히 알기는 어려워요.", desc:"깊은 물속은 들여다볼 수 있어도 사람의 마음은 정말 알기 어렵다는 뜻이에요. 사람을 함부로 판단하지 말아요!" },
+    { p:"쇠뿔도 단김에 빼라", a:"좋은 기회가 왔을 때 바로 행동해라", w:["쇠뿔은 뽑으면 안 된다","단김은 뜨거운 김이다","쇠는 차가울 때 만져라"], ex:"하고 싶은 말이 생겼을 때 용기 내서 바로 말해야 해요. 나중엔 기회가 없을 수 있어요.", desc:"쇠뿔은 뜨거울 때 빼야 쉽듯이, 무슨 일이든 적절한 때를 놓치지 말고 바로 해야 한다는 뜻이에요!" },
+    { p:"윗물이 맑아야 아랫물이 맑다", a:"위에 있는 사람이 바르게 해야 아래도 바르게 된다", w:["물은 위에서 아래로 흐른다","맑은 물은 마셔도 된다","아랫물이 먼저 맑아진다"], ex:"선생님이 먼저 바르게 행동해야 학생들도 따라서 바르게 행동해요.", desc:"위에서 솔선수범해야 아래도 따라서 좋아진다는 뜻이에요. 어른과 리더의 역할이 중요해요!" },
+    { p:"도둑이 제 발 저리다", a:"잘못한 사람은 스스로 불안해한다", w:["도둑은 발이 빠르다","저린 발은 병이다","도둑은 잡히면 무섭다"], ex:"거짓말을 한 아이가 선생님 눈을 피하며 불안해하는 것처럼요.", desc:"잘못을 저지른 사람은 들킬까봐 스스로 불안해하고 겁을 낸다는 뜻이에요!" },
+    { p:"하룻강아지 범 무서운 줄 모른다", a:"경험 없는 사람이 무모하게 덤빈다", w:["강아지는 호랑이를 좋아한다","하루된 강아지는 귀엽다","범은 강아지를 무서워한다"], ex:"이제 막 운동을 시작한 친구가 대회 챔피언에게 도전한다면 이런 상황이에요.", desc:"세상 경험이 없는 사람이 무서운 것도 모르고 무모하게 도전하는 상황을 표현해요!" },
+  ],
+  hard: [
+    { p:"등잔 밑이 어둡다", a:"가까이 있는 것을 오히려 모른다", w:["등잔은 기름으로 켠다","어두울 때는 등잔을 써야 한다","등잔은 위로 빛을 비춘다"], ex:"도둑이 경찰서 바로 옆 건물에 숨어있었다는 이야기처럼, 너무 가까이 있어서 못 찾기도 해요.", desc:"등잔 바로 아래는 빛이 닿지 않아 어둡듯이, 너무 가까이 있는 것은 오히려 눈에 띄지 않는다는 뜻이에요!" },
+    { p:"목구멍이 포도청이다", a:"먹고 살기 위해 어쩔 수 없이 한다", w:["포도청은 재판소다","목구멍은 음식이 지나간다","포도청에 가면 무섭다"], ex:"하기 싫은 일이라도 돈을 벌기 위해 억지로 해야 할 때 쓰는 말이에요.", desc:"포도청은 옛날 경찰서인데, 먹고살기 위해서라면 무서운 포도청에도 간다는 뜻이에요. 생계를 위한 어쩔 수 없는 행동을 표현해요!" },
+    { p:"지렁이도 밟으면 꿈틀한다", a:"아무리 약한 자도 괴롭히면 반항한다", w:["지렁이는 땅속에 산다","지렁이를 밟으면 죽는다","지렁이는 밟아도 움직이지 않는다"], ex:"항상 조용하던 친구도 계속 놀리면 결국 화를 낼 수 있어요.", desc:"아무리 힘없고 약한 사람이라도 계속 억압하면 반드시 저항하게 된다는 뜻이에요. 약자를 무시하면 안 돼요!" },
+    { p:"같은 값이면 다홍치마", a:"같은 조건이면 더 좋은 것을 선택한다", w:["다홍색 치마는 비싸다","치마 색은 관계없다","다홍치마를 입으면 예쁘다"], ex:"같은 가격이면 더 예쁘고 좋은 것을 고르는 게 당연하잖아요!", desc:"같은 값이라면 더 좋고 나은 것을 선택하는 게 현명하다는 뜻이에요. 합리적인 선택을 강조하는 말이에요!" },
+    { p:"빛 좋은 개살구", a:"겉만 그럴듯하고 속은 별로다", w:["개살구는 달다","살구는 개가 좋아한다","빛이 좋으면 맛도 좋다"], ex:"포장은 화려한데 막상 열어보니 별로인 선물처럼요.", desc:"개살구는 겉은 살구처럼 예쁘지만 먹으면 시고 맛없어요. 겉모습만 번지르르하고 실속이 없는 것을 표현해요!" },
+    { p:"까마귀 날자 배 떨어진다", a:"우연히 일이 겹쳐 오해를 받는다", w:["까마귀는 배를 먹는다","배나무에는 까마귀가 산다","까마귀가 날면 비가 온다"], ex:"친구가 일어서는 순간 다른 친구 물건이 떨어져서 오해를 받는 상황이에요.", desc:"까마귀가 날아오른 것과 배가 떨어진 것은 우연이지만 관련있어 보이듯, 공교롭게 때가 맞아 오해받는 상황을 표현해요!" },
+    { p:"개구리 올챙이 적 생각 못 한다", a:"잘 되면 예전 어려웠던 시절을 잊는다", w:["개구리는 올챙이에서 자란다","올챙이는 헤엄을 잘 친다","개구리는 물속에만 산다"], ex:"성공한 어른이 자신도 어릴 때 힘들었다는 걸 잊고 아이들을 이해 못 하는 경우예요.", desc:"개구리가 올챙이였던 때를 기억 못 하듯, 형편이 좋아지면 어려웠던 시절을 잊는다는 뜻이에요. 겸손이 중요해요!" },
+    { p:"소 잃고 외양간 고친다", a:"일이 잘못된 후에야 대비한다", w:["소는 외양간에서 산다","외양간을 미리 고쳐야 한다","소가 없으면 외양간도 없다"], ex:"휴대폰을 잃어버린 후에야 잠금장치를 설정하는 것처럼, 너무 늦은 대처예요.", desc:"소를 도둑맞고 나서야 외양간을 고치듯, 이미 일이 벌어진 후에야 대비책을 세우는 어리석음을 표현해요!" },
+    { p:"아니 땐 굴뚝에 연기 나랴", a:"원인 없이 결과가 생기지 않는다", w:["굴뚝은 연기가 나야 한다","땐 것은 연기가 없다","연기는 굴뚝 없이도 난다"], ex:"소문에는 대부분 어떤 이유가 있게 마련이에요.", desc:"불을 때지 않은 굴뚝에서 연기가 날 수 없듯, 모든 일에는 반드시 원인이 있다는 뜻이에요!" },
+    { p:"뛰는 놈 위에 나는 놈 있다", a:"아무리 뛰어나도 더 뛰어난 사람이 있다", w:["뛰는 사람은 빠르다","나는 것이 뛰는 것보다 느리다","뛰는 것과 나는 것은 같다"], ex:"우리 반 1등도 전국에서 보면 더 잘하는 친구가 있어요. 항상 겸손해야 해요.", desc:"아무리 능력이 뛰어나도 항상 더 뛰어난 사람이 있으니 교만하지 말라는 뜻이에요!" },
+    { p:"자라 보고 놀란 가슴 솥뚜껑 보고 놀란다", a:"한번 놀라면 비슷한 것에도 겁낸다", w:["자라는 솥뚜껑을 좋아한다","솥뚜껑은 자라처럼 생겼다","자라와 솥뚜껑은 무겁다"], ex:"한번 개한테 물린 적이 있으면 작은 강아지만 봐도 무서워지는 것처럼요.", desc:"자라에 놀란 사람이 비슷하게 생긴 솥뚜껑에도 깜짝 놀라듯, 한번 혼난 경험이 비슷한 상황에서 공포심을 만들어요!" },
+    { p:"내 코가 석 자", a:"자기도 힘들어 남을 도울 처지가 아니다", w:["코가 길면 좋지 않다","석 자는 짧은 길이다","코는 세 번 풀어야 한다"], ex:"나 자신도 숙제가 산더미인데 친구 숙제를 도와줄 상황이 못 돼요.", desc:"내 콧물이 석 자나 흘러내릴 만큼 나도 힘드니, 남을 도울 여유가 없다는 뜻이에요!" },
+    { p:"가는 날이 장날이다", a:"공교롭게 때가 맞아 뜻밖의 상황이 생긴다", w:["장날에는 물건이 많다","가는 날을 잘 골라야 한다","장날에 가면 사람이 많다"], ex:"하필 도서관에 간 날이 휴관일인 경우처럼, 공교롭게 일이 맞아떨어질 때 써요.", desc:"마침 어떤 날에 가보니 장이 서고 있어 예상 못 한 상황을 만난다는 뜻으로, 뜻밖의 상황에 쓰는 말이에요!" },
+    { p:"고양이 쥐 생각", a:"해칠 생각을 하면서 걱정하는 척한다", w:["고양이는 쥐를 무서워한다","쥐는 고양이를 좋아한다","고양이와 쥐는 친구다"], ex:"경쟁자를 걱정하는 척하면서 사실 이기고 싶은 마음인 경우예요.", desc:"쥐를 잡아먹는 고양이가 쥐를 걱정하는 척하듯, 속으로는 해칠 생각을 하면서 겉으로는 위해주는 척하는 상황이에요!" },
+    { p:"호미로 막을 것을 가래로 막는다", a:"미리 해결했으면 쉬웠을 일을 키워버렸다", w:["호미와 가래는 농기구다","가래가 호미보다 작다","호미로는 땅을 팔 수 없다"], ex:"처음에 사과했으면 될 일을 미뤄서 크게 싸움이 된 경우예요.", desc:"호미(작은 도구)로 막을 수 있었던 것을 방치해서 가래(큰 도구)가 필요해진 상황처럼, 작은 문제를 방치해 크게 키운 걸 뜻해요!" },
+    { p:"빈 수레가 요란하다", a:"실속 없는 사람이 더 떠들어댄다", w:["수레는 무거울수록 소리가 크다","빈 것은 가볍다","수레 소리는 위험하다"], ex:"아는 게 별로 없는 사람이 오히려 더 큰소리를 치는 경우예요.", desc:"짐이 없는 빈 수레가 덜컹거리며 요란하게 소리를 내듯, 실력이나 내용이 없는 사람이 더 시끄럽게 떠든다는 뜻이에요!" },
+    { p:"닭 잡아먹고 오리발 내민다", a:"잘못을 저지르고 엉뚱하게 발뺌한다", w:["닭과 오리는 친구다","오리발은 물에서 쓴다","닭발과 오리발은 같다"], ex:"형제 과자를 먹고 '나 안 먹었어'라고 발뺌하는 것처럼요.", desc:"닭을 잡아먹고는 오리발을 내밀며 오리를 잡았다고 거짓말하는 것처럼, 잘못을 저지르고 뻔뻔하게 발뺌하는 상황이에요!" },
+    { p:"달도 차면 기운다", a:"모든 것은 정점 후에 내려간다", w:["달은 항상 둥글다","차면 넘친다","달은 기울면 없어진다"], ex:"아무리 잘나가는 사람도 언젠가는 인기가 떨어지는 때가 와요.", desc:"보름달도 차고 나면 점점 기울어지듯, 어떤 것이든 전성기를 지나면 쇠락하기 마련이라는 뜻이에요!" },
+    { p:"진흙 속에서도 연꽃은 핀다", a:"나쁜 환경에서도 훌륭한 사람이 나온다", w:["연꽃은 물에서만 핀다","진흙은 더럽다","연꽃은 진흙을 싫어한다"], ex:"어려운 가정환경에서도 훌륭한 사람이 되는 경우를 표현해요.", desc:"연꽃은 더러운 진흙 속에서 자라지만 아름다운 꽃을 피워요. 어떤 환경이라도 노력하면 훌륭하게 될 수 있다는 희망의 말이에요!" },
+    { p:"가랑잎이 솔잎더러 바스락거린다 한다", a:"자기 결점은 모르면서 남의 결점을 탓한다", w:["가랑잎은 솔잎보다 크다","솔잎은 소리가 없다","가랑잎은 바스락 소리가 안 난다"], ex:"공부를 안 하는 친구가 다른 친구더러 게으르다고 하는 상황이에요.", desc:"더 시끄러운 가랑잎이 솔잎더러 소리 난다고 나무라듯, 자기 결점이 더 크면서 남을 탓하는 모습을 꼬집는 말이에요!" },
+  ]
+};
+
+const TOTAL_Q = 10;
+let level='easy', score=0, qNum=0, answered=false;
+let currentLevel='easy', usedIdx=[], queue=[];
+let audioCtx=null, deferredPrompt=null;
+
+function getCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playTone(type,f1,f2,dur,vol){
+  try{const c=getCtx(),o=c.createOscillator(),g=c.createGain();
+  o.connect(g);g.connect(c.destination);o.type=type;
+  o.frequency.setValueAtTime(f1,c.currentTime);
+  if(f2)o.frequency.linearRampToValueAtTime(f2,c.currentTime+dur);
+  g.gain.setValueAtTime(vol,c.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);
+  o.start(c.currentTime);o.stop(c.currentTime+dur);}catch(e){}
+}
+function playChord(ns,dur,vol){ns.forEach(f=>playTone('sine',f,null,dur,vol));}
+function playClick(){playTone('sine',880,1100,0.12,0.15);}
+function playBack(){playTone('sine',600,400,0.15,0.12);}
+function playCorrect(){[0,0.13,0.28].forEach((t,i)=>{const f=[[523,659],[659,784],[784,1047]];setTimeout(()=>playChord(f[i],0.22,0.13),t*1000);});}
+function playWrong(){playTone('sawtooth',220,150,0.3,0.13);setTimeout(()=>playTone('sawtooth',180,120,0.25,0.1),150);}
+function playNext(){playTone('sine',660,880,0.18,0.13);}
+function playLvSelect(){[0,100,200].forEach((t,i)=>setTimeout(()=>playTone('sine',[440,550,660][i],null,0.15,0.13),t));}
+function playResult(good){if(good){[0,0.15,0.3,0.45].forEach((t,i)=>{const f=[[523,659],[659,784],[784,1047],[1047,1319]];setTimeout(()=>playChord(f[i],0.25,0.12),t*1000);});}else{playTone('sine',440,330,0.4,0.12);}}
+
+const lvMeta={
+  easy:{label:'🌱 초급',pill:'pill-easy',card:'easy',bar:'#97C459'},
+  mid: {label:'⭐ 중급',pill:'pill-mid', card:'mid', bar:'#85B7EB'},
+  hard:{label:'🔥 고급',pill:'pill-hard',card:'hard',bar:'#ED93B1'}
+};
+
+function show(id){['mainScreen','quizScreen','resultScreen'].forEach(s=>document.getElementById(s).classList.remove('active'));document.getElementById(id).classList.add('active');}
+
+function goMain(){show('mainScreen');score=0;qNum=0;}
+
+function startQuiz(lv){
+  level=lv;currentLevel=lv;score=0;qNum=0;answered=false;
+  usedIdx=[];
+  // 20문제 중 10개 랜덤 뽑기
+  const pool=PROVERBS[lv];
+  const idxArr=[...Array(pool.length).keys()];
+  for(let i=idxArr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[idxArr[i],idxArr[j]]=[idxArr[j],idxArr[i]];}
+  queue=idxArr.slice(0,TOTAL_Q);
+
+  playLvSelect();
+  const m=lvMeta[lv];
+  const pill=document.getElementById('levelPill');
+  pill.textContent=m.label; pill.className='level-pill '+m.pill;
+  document.getElementById('progressFill').style.background=m.bar;
+  document.getElementById('scoreNum').textContent='0';
+  show('quizScreen');
+  nextQuestion();
+}
+
+function nextQuestion(){
+  if(qNum>=TOTAL_Q){showResult();return;}
+  answered=false;
+  const data=PROVERBS[level][queue[qNum]];
+  qNum++;
+  document.getElementById('qNumLine').textContent=`문제 ${qNum} / ${TOTAL_Q}`;
+  document.getElementById('progressFill').style.width=`${((qNum-1)/TOTAL_Q)*100}%`;
+  document.getElementById('explainBox').classList.remove('show');
+  document.getElementById('feedbackLine').textContent='';
+  document.getElementById('nextWrap').style.display='none';
+  const opts=shuffle([data.a,...data.w]);
+  const m=lvMeta[level];
+  document.getElementById('quizArea').innerHTML=`
+    <div class="proverb-card ${m.card}">
+      <div class="proverb-main">${data.p}</div>
+      <div class="proverb-sub">이 속담의 뜻은 무엇일까요?</div>
+    </div>
+    <div class="opts">${opts.map(o=>`<button class="opt" data-val="${encodeURIComponent(o)}" data-ans="${encodeURIComponent(data.a)}" data-idx="${queue[qNum-1]}" onclick="choose(this)">${o}</button>`).join('')}</div>`;
+}
+
+function choose(btn){
+  if(answered)return; answered=true;
+  playClick();
+  const ans=decodeURIComponent(btn.dataset.ans);
+  const chosen=decodeURIComponent(btn.dataset.val);
+  const idx=parseInt(btn.dataset.idx);
+  const data=PROVERBS[level][idx];
+  document.querySelectorAll('.opt').forEach(b=>{b.disabled=true;if(decodeURIComponent(b.dataset.val)===ans)b.classList.add('correct');});
+  const fb=document.getElementById('feedbackLine');
+  if(chosen===ans){
+    btn.classList.add('correct'); score++;
+    document.getElementById('scoreNum').textContent=score;
+    fb.innerHTML='<span class="fb-ok">🎉 정답이에요! 대단해요!</span>';
+    playCorrect();
+  }else{
+    btn.classList.add('wrong');
+    fb.innerHTML='<span class="fb-no">🙁 아쉬워요! 정답을 확인해봐요.</span>';
+    playWrong();
+  }
+  // 풀이 표시
+  const box=document.getElementById('explainBox'),content=document.getElementById('explainContent');
+  box.classList.add('show');
+  const stars=chosen===ans?'<div class="stars">⭐⭐⭐</div>':'';
+  content.innerHTML=`${stars}<div class="explain-text">${data.desc}</div><div class="explain-ex">📌 예시: ${data.ex}</div>`;
+
+  document.getElementById('nextWrap').style.display='block';
+  const nb=document.getElementById('nextBtn');
+  const isLast=(qNum>=TOTAL_Q);
+  nb.textContent=isLast?'결과 보기 🎊':'다음 문제 →';
+  nb.onclick=()=>{playNext(); isLast?showResult():nextQuestion();};
+}
+
+function showResult(){
+  document.getElementById('progressFill').style.width='100%';
+  const pct=Math.round((score/TOTAL_Q)*100);
+  let emoji='😢',title='다음엔 더 잘 할 수 있어요!',sub='';
+  if(pct>=90){emoji='🏆';title='속담 왕이에요!';}
+  else if(pct>=70){emoji='🎉';title='정말 잘했어요!';}
+  else if(pct>=50){emoji='😊';title='잘 했어요!';}
+  sub=`${TOTAL_Q}문제 중 ${score}개 정답 (${pct}%)`;
+  document.getElementById('resultEmoji').textContent=emoji;
+  document.getElementById('resultTitle').textContent=title;
+  document.getElementById('resultSub').textContent=sub;
+  document.getElementById('resultScore').textContent=`${score}/${TOTAL_Q}`;
+  document.getElementById('resultLabel').textContent=`정답률 ${pct}%`;
+  playResult(pct>=70);
+  show('resultScreen');
+}
+
+function shuffle(arr){return arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(v=>v[1]);}
+
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('installBar').classList.add('show');});
+document.getElementById('installBtn').onclick=()=>{playClick();if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById('installBar').classList.remove('show');});}};
+document.getElementById('installClose').onclick=()=>document.getElementById('installBar').classList.remove('show');
+</script>
+</body>
+</html>
